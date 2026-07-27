@@ -1,3 +1,5 @@
+![OwlMyPower](assets/banner.png)
+
 # 🦉 OwlMyPower
 
 Automatic Windows power-plan switcher. It watches system-wide input activity
