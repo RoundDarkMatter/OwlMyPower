@@ -69,6 +69,7 @@ POWER_SAVER_GUID = "a1841308-3541-4fab-bc81-f71556f20b4a"
 
 TICK_MS = 1000                     # main evaluation cadence (GUI thread)
 ANIM_MS = 130                      # animated-logo frame cadence
+TRAY_ANIM_EVERY = 3                # tray advances every N logo ticks (~2.5 fps)
 CREATE_NO_WINDOW = 0x08000000      # suppress the cmd/console flash on subprocess
 IDLE_ACTIVE_THRESHOLD = 1.0        # seconds of idle below which we treat as active
 NOTIFY_COOLDOWN = 8.0              # min seconds between toast notifications
@@ -556,6 +557,59 @@ def render_logo_frames(logo_image):
     return awake, sleep
 
 
+def render_tray_frames(logo_image):
+    """Compact 64px tray animations with minimal motion (tray renders ~16-24px).
+
+    The source logo has large transparent margins, so frames crop to the owl's
+    content box and scale it to fill the icon; otherwise the tray owl looks tiny.
+    Awake: static crisp owl with a quick periodic blink.
+    Sleep: tilted closed-eye owl with one chunky Z pulsing beside the head.
+    """
+    base = logo_image.convert("RGBA")
+    bbox = base.getbbox() or (0, 0, base.width, base.height)
+    size = 64
+
+    def body(closed=0.0, lash=False):
+        im = _with_eyelids(base, closed, lash) if closed > 0 else base.copy()
+        im = im.crop(bbox)
+        scale = (size - 2) / max(im.width, im.height)   # fill, 1px breathing room
+        return im.resize((max(1, int(im.width * scale)),
+                          max(1, int(im.height * scale))), Image.LANCZOS)
+
+    def canvas_with(img):
+        if img.width > size or img.height > size:       # centre-crop oversize
+            left = max(0, (img.width - size) // 2)
+            top = max(0, (img.height - size) // 2)
+            img = img.crop((left, top, left + min(size, img.width),
+                            top + min(size, img.height)))
+        frame = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        frame.alpha_composite(img, ((size - img.width) // 2, (size - img.height) // 2))
+        return frame
+
+    owl_open = canvas_with(body())
+    owl_half = canvas_with(body(0.55))
+    owl_shut = canvas_with(body(1.0))
+
+    # ~10-frame loop at ~2.5 fps: blink flutter every ~4 s, no positional motion
+    awake = [owl_open] * 8 + [owl_half, owl_shut]
+
+    sleepy = canvas_with(body(1.0, lash=True)
+                         .rotate(8, resample=Image.BICUBIC, expand=True))
+
+    sleep = []
+    z_states = ((30, 210), (24, 240), (19, 255), (24, 160))  # (font px, alpha) pulse
+    for fs, alpha in z_states:
+        frame = sleepy.copy()
+        font = _zzz_font(fs)
+        if font is not None:
+            tile = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+            ImageDraw.Draw(tile).text((size - fs - 2, 0), "Z",
+                                      font=font, fill=(140, 185, 250, alpha))
+            frame.alpha_composite(tile.rotate(-12, resample=Image.BICUBIC, expand=False))
+        sleep.append(frame)
+    return awake, sleep
+
+
 # --------------------------------------------------------------------------- #
 # Application
 # --------------------------------------------------------------------------- #
@@ -608,6 +662,11 @@ class OwlMyPower:
         self._anim_frame = 0
         self._logo_frames_awake = None
         self._logo_frames_sleep = None
+        self._tray_frames_awake = None
+        self._tray_frames_sleep = None
+        self._tray_frame = 0
+        self._tray_tick = 0
+        self._tray_sleeping = None
 
         self._setup_logging()
         log.info("%s %s starting", APP_NAME, __version__)
@@ -830,7 +889,7 @@ class OwlMyPower:
         titles.pack(side=tk.LEFT, anchor="w")
         tk.Label(titles, text=APP_NAME, font=("Segoe UI", 16, "bold"),
                  bg=bg, fg=fg).pack(anchor="w")
-        tk.Label(titles, text=f"Aero Glass edition · {self.aero_variant}",
+        tk.Label(titles, text=f"Legacy edition · {self.aero_variant}",
                  font=("Segoe UI", 9), bg=bg, fg=fg).pack(anchor="w")
 
     def _build_status_card(self, parent):
@@ -922,6 +981,12 @@ class OwlMyPower:
         except Exception:
             self._logo_frames_awake = None
             self._logo_frames_sleep = None
+        try:
+            self._tray_frames_awake, self._tray_frames_sleep = \
+                render_tray_frames(self.logo_image)
+        except Exception:
+            self._tray_frames_awake = None
+            self._tray_frames_sleep = None
 
     def _animate_logo(self):
         if not (self._running and self.logo_label and self._logo_frames_awake):
@@ -933,7 +998,25 @@ class OwlMyPower:
             self.logo_label.configure(image=frames[self._anim_frame])
         except tk.TclError:
             return
+        self._animate_tray(sleeping)
         self.root.after(ANIM_MS, self._animate_logo)
+
+    def _animate_tray(self, sleeping):
+        """Advance the tray icon at a gentle cadence (pystray setter is thread-safe)."""
+        if not (self.icon and self._tray_frames_awake):
+            return
+        self._tray_tick += 1
+        if sleeping != self._tray_sleeping:      # state flip: swap immediately
+            self._tray_sleeping = sleeping
+            self._tray_frame = 0
+        elif self._tray_tick % TRAY_ANIM_EVERY:
+            return
+        frames = self._tray_frames_sleep if sleeping else self._tray_frames_awake
+        self._tray_frame = (self._tray_frame + 1) % len(frames)
+        try:
+            self.icon.icon = frames[self._tray_frame]
+        except Exception:
+            pass
 
     def _plan_labels(self):
         names = [p.name for p in self.plans]
@@ -1073,7 +1156,10 @@ class OwlMyPower:
     # ------------------------------------------------------------------ #
     def _build_tray(self):
         try:
-            image = self._compose_tray_icon(active=True)
+            if self._tray_frames_awake:
+                image = self._tray_frames_awake[0]
+            else:
+                image = self._compose_tray_icon(active=True)
         except Exception:
             image = self._fallback_icon(active=True)
 
@@ -1110,7 +1196,11 @@ class OwlMyPower:
         return image
 
     def _update_tray_icon(self):
+        """Force the animated tray to re-sync its awake/asleep pose on next tick."""
         if not self.icon:
+            return
+        if self._tray_frames_awake:
+            self._tray_sleeping = None           # next _animate_tray call re-syncs
             return
         active = self.current_plan.guid == self.active_plan.guid
         try:
@@ -1534,7 +1624,7 @@ class OwlMyPower:
         self._center_window(win, max(440, win.winfo_reqwidth()), win.winfo_reqheight())
 
     def open_about(self):
-        edition = "Modern (Windows 8.1-11)" if self.modern else f"Aero Glass ({self.aero_variant})"
+        edition = "Modern (Windows 8.1-11)" if self.modern else f"Legacy ({self.aero_variant})"
         messagebox.showinfo(
             f"About {APP_NAME}",
             f"{APP_NAME} {__version__}\n"

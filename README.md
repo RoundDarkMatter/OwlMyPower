@@ -10,15 +10,29 @@ plan, with awareness of AC/battery, fullscreen apps, CPU load, and per-app rules
 |:---:|:---:|
 | ![awake](assets/owl_awake.gif) | ![sleep](assets/owl_sleep.gif) |
 
-Supports **Windows Vista through 11** from a single source, shipped as **two builds**:
+Supports **Windows Vista through 11** from a single source, shipped as **two editions**:
 
 | Edition | Target | Python | Look |
 |---|---|---|---|
 | **Modern** | Windows 8.1 / 10 / 11 | 3.11 (64-bit) | sv-ttk "Sun Valley", follows OS light/dark |
-| **Aero Glass** | Windows Vista / 7 | 3.8 (32-bit) | native Aero Glass, rendered per-OS |
+| **Legacy** | Windows Vista / 7 | 3.8 (32-bit) | native Aero Glass, rendered per-OS |
 
 The edition is also selected at **runtime** by OS version. Windows XP and ARM32
 are not supported.
+
+## Download & install
+
+Grab the latest from **[Releases](https://github.com/RoundDarkMatter/OwlMyPower/releases)**:
+
+- `OwlMyPower-1.0-Setup.exe` — installer for Windows 8.1 / 10 / 11 (64-bit)
+- `OwlMyPower-1.0-Legacy-Setup.exe` — installer for Windows 7 (32-bit)
+- `OwlMyPower_1.0.exe` / `OwlMyPower_1.0_Legacy.exe` — portable, no install
+
+> The Legacy **installer** requires Windows 7+; on Windows Vista use the
+> portable `OwlMyPower_1.0_Legacy.exe` directly — the app itself runs fine.
+
+Both installers offer Start-menu/desktop shortcuts and an optional
+"start with Windows (minimized to tray)" task, and cleanly uninstall.
 
 ## Features
 
@@ -32,8 +46,8 @@ are not supported.
   or while the CPU is busy (long compiles, renders, downloads).
 - **Per-app rules** — force a chosen plan while named processes are running.
 - **Pause** — from the window or the tray (including timed 30 min / 1 hour).
-- **Animated tray companion** — the owl bobs and blinks while you work, and
-  falls asleep with a drifting *Z z Z* when the idle plan kicks in.
+- **Animated owl** — bobs and blinks in the window while you work, sleeps with a
+  drifting *Z z Z* when idle; the tray icon blinks and dozes right along with it.
 - Restore original plan on exit, start with Windows, start minimized,
   switch notifications, optional logging, single-instance guard, DPI aware.
 
@@ -49,9 +63,9 @@ Flags:
 - `--selftest` — headless check of the Win32 layer (plans, idle time, power/CPU
   status, process count).
 - `--min` — start minimized to the tray.
-- Set `OWL_FORCE_LEGACY=1` to preview the Aero Glass UI path on a modern OS.
+- Set `OWL_FORCE_LEGACY=1` to preview the Legacy UI path on a modern OS.
 
-## Build the executables
+## Build
 
 **Modern (Windows 8.1–11)** — 64-bit Python 3.11:
 
@@ -61,18 +75,25 @@ python -m PyInstaller OwlMyPower_1.0.spec --noconfirm --clean
 # -> dist\OwlMyPower_1.0.exe
 ```
 
-**Aero Glass (Windows Vista / 7)** — 32-bit Python 3.8:
+**Legacy (Windows Vista / 7)** — 32-bit Python 3.8:
 
 ```powershell
 py -3.8-32 -m pip install pyinstaller -r requirements-legacy.txt
-py -3.8-32 -m PyInstaller OwlMyPower_1.0_Vista7.spec --noconfirm --clean
-# -> dist\OwlMyPower_1.0_Vista7.exe
+py -3.8-32 -m PyInstaller OwlMyPower_1.0_Legacy.spec --noconfirm --clean
+# -> dist\OwlMyPower_1.0_Legacy.exe
+```
+
+**Installers** — [Inno Setup 6](https://jrsoftware.org/isinfo.php):
+
+```powershell
+ISCC.exe installer\OwlMyPower-Modern.iss
+ISCC.exe installer\OwlMyPower-Legacy.iss
+# -> installer\output\OwlMyPower-1.0-Setup.exe / OwlMyPower-1.0-Legacy-Setup.exe
 ```
 
 > PyInstaller cannot cross-compile: each binary must be produced on (or for)
-> its own toolchain. The Vista/7 build uses PyInstaller 5.13.x, whose
-> bootloader still supports those systems, and excludes the modern theme
-> dependencies entirely.
+> its own toolchain. The Legacy build uses PyInstaller 5.13.x, whose bootloader
+> still supports Vista/7, and excludes the modern theme dependencies entirely.
 
 ## Settings & logs
 
