@@ -1,0 +1,5 @@
+# Windows Vista / 7 (Aero Glass) build — install with 32-bit Python 3.8.
+# sv-ttk and darkdetect are intentionally omitted (the legacy path uses the
+# native Aero theme and Windows' own light appearance).
+pystray
+Pillow

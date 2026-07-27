@@ -1,0 +1,14 @@
+# user configuration & logs — never ship personal settings
+owlmypower_settings.json
+owlmypower.log*
+
+# build output
+build/
+dist/
+__pycache__/
+*.pyc
+*.spec.bak
+
+# local tooling
+.venv/
+venv/
