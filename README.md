@@ -26,13 +26,12 @@ Grab the latest from **[Releases](https://github.com/RoundDarkMatter/OwlMyPower/
 
 - `OwlMyPower-1.0-Setup.exe` — installer for Windows 8.1 / 10 / 11 (64-bit)
 - `OwlMyPower-1.0-Legacy-Setup.exe` — installer for Windows 7 (32-bit)
-- `OwlMyPower_1.0.exe` / `OwlMyPower_1.0_Legacy.exe` — portable, no install
-
-> The Legacy **installer** requires Windows 7+; on Windows Vista use the
-> portable `OwlMyPower_1.0_Legacy.exe` directly — the app itself runs fine.
 
 Both installers offer Start-menu/desktop shortcuts and an optional
 "start with Windows (minimized to tray)" task, and cleanly uninstall.
+
+> The Legacy installer requires Windows 7+. The Legacy edition itself still
+> runs on Windows Vista SP2 — build it from source (see below).
 
 ## Features
 
