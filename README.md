@@ -89,9 +89,7 @@ ISCC.exe installer\OwlMyPower-Legacy.iss
 
 Stored next to the executable as `owlmypower_settings.json` (plus
 `owlmypower.log` when logging is enabled); falls back to
-`%LOCALAPPDATA%\OwlMyPower` if that location is not writable. Writes are
-atomic. Fresh installs start with clean defaults — no configuration ships
-with the app.
+`%LOCALAPPDATA%\OwlMyPower` if that location is not writable.
 
 ## License
 
