@@ -14,24 +14,15 @@ Supports **Windows Vista through 11** from a single source, shipped as **two edi
 
 | Edition | Target | Python | Look |
 |---|---|---|---|
-| **Modern** | Windows 8.1 / 10 / 11 | 3.11 (64-bit) | sv-ttk "Sun Valley", follows OS light/dark |
-| **Legacy** | Windows Vista / 7 | 3.8 (32-bit) | native Aero Glass, rendered per-OS |
-
-The edition is also selected at **runtime** by OS version. Windows XP and ARM32
-are not supported.
+| **Modern** | Windows 8.1 / 10 / 11 | 3.11 (64-bit) | follows OS light/dark |
+| **Legacy** | Windows Vista / 7 | 3.8 (32-bit) | native Aero Glass |
 
 ## Download & install
 
 Grab the latest from **[Releases](https://github.com/RoundDarkMatter/OwlMyPower/releases)**:
 
-- `OwlMyPower-1.0-Setup.exe` — installer for Windows 8.1 / 10 / 11 (64-bit)
-- `OwlMyPower-1.0-Legacy-Setup.exe` — installer for Windows 7 (32-bit)
-
-Both installers offer Start-menu/desktop shortcuts and an optional
-"start with Windows (minimized to tray)" task, and cleanly uninstall.
-
-> The Legacy installer requires Windows 7+. The Legacy edition itself still
-> runs on Windows Vista SP2 — build it from source (see below).
+- `OwlMyPower-1.0-Setup.exe` — installer for Windows 10 / 11 (64-bit)
+- `OwlMyPower-1.0-Legacy-Setup.exe` — installer for Windows Vista & 7 (32-bit)
 
 ## Features
 
@@ -66,7 +57,7 @@ Flags:
 
 ## Build
 
-**Modern (Windows 8.1–11)** — 64-bit Python 3.11:
+**Modern (Windows 10–11)** — 64-bit Python 3.11:
 
 ```powershell
 pip install pyinstaller -r requirements.txt
@@ -92,7 +83,7 @@ ISCC.exe installer\OwlMyPower-Legacy.iss
 
 > PyInstaller cannot cross-compile: each binary must be produced on (or for)
 > its own toolchain. The Legacy build uses PyInstaller 5.13.x, whose bootloader
-> still supports Vista/7, and excludes the modern theme dependencies entirely.
+> supports Vista/7, and excludes the modern theme dependencies entirely.
 
 ## Settings & logs
 
