@@ -1,6 +1,6 @@
 ![OwlMyPower](assets/banner.png)
 
-# 🦉 OwlMyPower
+# 🦉 OwlMyPower (WIP)
 
 Automatic Windows power-plan switcher. It watches system-wide input activity
 (keyboard **and** mouse) and switches between an **active** plan and an **idle**
